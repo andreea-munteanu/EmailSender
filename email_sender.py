@@ -1,7 +1,8 @@
 import os
 import ssl
+import time
 import smtplib
-# from email.message import EmailMessage
+import datetime
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.audio import MIMEAudio
@@ -10,28 +11,19 @@ from email.mime.multipart import MIMEMultipart
 
 
 class EmailSender:
-    def __init__(self, sender, password, receiver, subject=None, body_text=open('EMail_body', 'r').read()):
+    def __init__(self, sender, password, receiver, subject=None):
         self.email_sender = sender
         self.email_password = password
         self.email_receiver = receiver
         self.email_subject = subject
-        self.email_body = body_text
-
-    # def set_up_email(self):
-    #     """ Doesn't allow for file attachments, use MIME instead. """
-    #     email = EmailMessage()
-    #     email['From'] = self.email_sender
-    #     email['To'] = self.email_receiver
-    #     email['Subject'] = self.email_subject
-    #     email.set_content(self.email_body)
-    #     return email
+        self.email_body = open('EMail_body', 'r').read()
 
     def set_message(self, images=None, attachments=None, audio=None):
         """
-        :param images: list of images (given as relative paths)
+        :param images:      list of images (given as relative paths)
         :param attachments: list of attachments (given as absolute paths)
-        :param audio: list of audio attachments (given as absolute paths)
-        :return:
+        :param audio:       list of audio attachments (given as absolute paths)
+        :return:            message containing the subject, body text and additional attachment files
         """
         message = MIMEMultipart()
         message['Subject'] = self.email_subject
@@ -71,7 +63,24 @@ class EmailSender:
 
         return message
 
-    def send_email(self, images=None, attachments=None, audio=None):
+    def send_email(self, images=None, attachments=None, audio=None,
+                   scheduled_time=False, year=None, month=None, day=None, hour=None, minute=None):
+        """
+        Other useful libraries:
+        https://pypi.org/project/hickory/ for macOS and Linux
+        https://pypi.org/project/python-crontab/ for Windows
+
+        :param images:          image files
+        :param attachments:     other files
+        :param audio:           audio files
+        :param scheduled_time:  bool (True if the email is scheduled for a specific time, False otherwise)
+        :param year:            int
+        :param month:           int
+        :param day:             int
+        :param hour:            int
+        :param minute:          int
+        :return:
+        """
         # add paths for images and/or attachments if necessary, example:
         # msg = self.set_message(r"C:\Users\Dell\Downloads\Garbage\Cartoon.jpg",  # image
         #                        r"C:\Users\Dell\Desktop\slack.py")  # attachment
@@ -81,17 +90,31 @@ class EmailSender:
             smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context)
             smtp.ehlo()
             smtp.login(self.email_sender, self.email_password)
+            if scheduled_time:
+                send_time = datetime.datetime(year, month, day, hour, minute, 0)
+                # print(f'send_time timestamp: {send_time.timestamp()}')
+                # print(f'time.time(): {time.time()}')
+                time.sleep(send_time.timestamp() - time.time())
             smtp.sendmail(self.email_sender, self.email_receiver, email.as_string())
             print('Email sent successfully.')
         except (Exception, ValueError) as e:
-            print("Sent failed.\n", e)
+            print("Sent failed.\nError:", e)
+
+
+def send_out_email(sender, password, receiver, subject='',                                          # credentials
+                   images=None, attachments=None, audio=None,                                       # attachment files
+                   scheduled_time=False, year=None, month=None, day=None, hour=None, minute=None):  # send time
+    em = EmailSender(sender, password, receiver, subject)
+    em.send_email(images, attachments, audio, scheduled_time, year, month, day, hour, minute)
 
 
 if __name__ == "__main__":
-    em = EmailSender(sender='andreea.munteanu05@gmail.com',
-                     password='your-encoded-password-goes-here',
-                     receiver=['andreea.munteanu05@gmail.com'],
-                     subject='')
-    em.send_email(attachments=[r"C:\Users\AEMunteanu\Desktop\netflix_data.txt"],
-                  audio=[r"C:\Users\AEMunteanu\Downloads\LP_-_Lost_On_You_Official_Music_Video[ConverteZilla.com].mp3"])
-    # em.send_email()
+    send_out_email(
+        sender='andreea.munteanu05@gmail.com',
+        password='duyuqvssdlmmqakj',
+        receiver=['andreea.munteanu05@gmail.com'],
+        subject='Subject is subject',
+        attachments=[r"C:\Users\AEMunteanu\Desktop\netflix_data.txt"],
+        audio=[r"C:\Users\AEMunteanu\Downloads\LP_-_Lost_On_You_Official_Music_Video[ConverteZilla.com].mp3"],
+        scheduled_time=True, year=2022, month=9, day=14, hour=11, minute=42
+    )
