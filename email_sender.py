@@ -70,9 +70,9 @@ class EmailSender:
         https://pypi.org/project/hickory/ for macOS and Linux
         https://pypi.org/project/python-crontab/ for Windows
 
-        :param images:          image files
-        :param attachments:     other files
-        :param audio:           audio files
+        :param images:          list of image files given as absolute paths
+        :param attachments:     list of other files given as absolute paths
+        :param audio:           list of audio files given as absolute paths
         :param scheduled_time:  bool (True if the email is scheduled for a specific time, False otherwise)
         :param year:            int
         :param month:           int
